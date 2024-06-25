@@ -1,44 +1,51 @@
 """App that tracks and analyzes your time. """
-from functools import partial
 import tkinter as tk
+from tkinter import ttk
+from typing import List
 
 
 __author__ = 'William Zhang'
 
 
-def print_value(var: tk.StringVar) -> None:
-    """Print the value stored in a variable.
+def get_user_input(choices: List[str]) -> str:
+    """Get user input via a multiple choice question window.
 
     Args:
-        var (tk.StringVar): tkinter string variable
+        choices (List[str]): choices for the user to select
+
+    Returns:
+        str: user selection
     """
-    print(f'Radio out -> {var.get()}')
-
-
-if __name__ == '__main__':
-    # Create main window
-    root = tk.Tk()
-    root.title('Check-in')
-
-    # Build check-in form
-    frame = tk.Frame(root)
-    frame.pack(padx=20, pady=20)
-    choices = ['Option 1', 'Option 2', 'Option 3']
+    window = tk.Toplevel()
+    window.title('Check-in')
     radio_out = tk.StringVar(value=choices[0])
     for choice in choices:
-        radio = tk.Radiobutton(
-            frame,
+        radio = ttk.Radiobutton(
+            window,
             text=choice,
             variable=radio_out,
             value=choice
         )
         radio.pack(padx=20, pady=5)
-    submit = tk.Button(
-        root,
+    submit = ttk.Button(
+        window,
         text='Submit',
-        command=partial(print_value, radio_out)
+        command=window.destroy
     )
     submit.pack(pady=10)
+    window.wait_window()
+    return radio_out.get()
 
-    # Run the Tkinter event loop
-    root.mainloop()
+
+if __name__ == '__main__':
+    # Create main window
+    root = tk.Tk()
+    root.title('Progress')
+    root.withdraw()
+
+    # Get user input
+    resp = get_user_input(['Option 1', 'Option 2', 'Option 3'])
+    print(resp)
+
+    # Destroy the main window
+    root.destroy()

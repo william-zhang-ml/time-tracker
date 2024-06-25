@@ -1,17 +1,17 @@
 """App that tracks and analyzes your time. """
 import tkinter as tk
 from tkinter import ttk
-from typing import List
+from typing import Iterable
 
 
 __author__ = 'William Zhang'
 
 
-def get_user_input(choices: List[str]) -> str:
+def get_user_input(choices: Iterable[str]) -> str:
     """Get user input via a multiple choice question window.
 
     Args:
-        choices (List[str]): choices for the user to select
+        choices (Iterable[str]): choices for the user to select
 
     Returns:
         str: user selection

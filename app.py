@@ -1,4 +1,5 @@
 """App that tracks and analyzes your time. """
+import sys
 import tkinter as tk
 from tkinter import ttk
 from typing import Iterable
@@ -17,7 +18,6 @@ def get_user_input(choices: Iterable[str]) -> str:
         str: user selection
     """
     window = tk.Toplevel()
-    window.title('Check-in')
     radio_out = tk.StringVar(value=choices[0])
     for choice in choices:
         radio = ttk.Radiobutton(
@@ -76,11 +76,14 @@ if __name__ == '__main__':
     root = tk.Tk()
     root.title('Progress')
 
-    for _ in range(5):
-        # Get user input
-        resp = get_user_input(['Option 1', 'Option 2', 'Option 3'])
+    try:
+        for _ in range(5):
+            # Get user input
+            resp = get_user_input(['Option 1', 'Option 2', 'Option 3'])
 
-        # Pack into progress tracker
-        ResponseButton(root, text=resp).pack(padx=20, pady=5)
+            # Pack into progress tracker
+            ResponseButton(root, text=resp).pack(padx=20, pady=5)
 
-    root.mainloop()
+        root.mainloop()
+    except tk.TclError:
+        sys.exit()

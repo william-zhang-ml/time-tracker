@@ -1,14 +1,16 @@
 """App that tracks and analyzes your time. """
+from functools import partial
 import sys
 import tkinter as tk
 from tkinter import ttk
 from typing import Iterable
+import warnings
 
 
 __author__ = 'William Zhang'
 
 
-def get_user_input(choices: Iterable[str]) -> str:
+def open_choice_menu(choices: Iterable[str]) -> str:
     """Get user input via a multiple choice question window.
 
     Args:
@@ -37,15 +39,26 @@ def get_user_input(choices: Iterable[str]) -> str:
     return radio_out.get()
 
 
+CHOICES = ['Option 1', 'Option 2', 'Option 3']
+get_user_input = partial(open_choice_menu, CHOICES)
+
+
 class ResponseButton(ttk.Button):
     """Button that keeps track of user response, lets user change response. """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.bind("<Enter>", lambda _: self.showtip())
-        self.bind("<Leave>", lambda _: self.hidetip())
+        self.bind("<Enter>", lambda _: self.show_tooltip())
+        self.bind("<Leave>", lambda _: self.hide_tooltip())
         self.tooltip = None
+        if self['command']:
+            warnings.warn('ResponseButton will override command.')
+        self['command'] = self.update_response
 
-    def showtip(self) -> None:
+    def update_response(self) -> None:
+        """Prompt user for a new response and update. """
+        self['text'] = get_user_input()
+
+    def show_tooltip(self) -> None:
         """Create a new tooltip window. """
         if self.tooltip:
             return  # already activated
@@ -64,7 +77,7 @@ class ResponseButton(ttk.Button):
         )
         label.pack(ipadx=1)
 
-    def hidetip(self) -> None:
+    def hide_tooltip(self) -> None:
         """Destroy the tooltip window. """
         if self.tooltip:
             self.tooltip.destroy()
@@ -79,10 +92,11 @@ if __name__ == '__main__':
     try:
         for _ in range(5):
             # Get user input
-            resp = get_user_input(['Option 1', 'Option 2', 'Option 3'])
+            resp = get_user_input()
 
             # Pack into progress tracker
-            ResponseButton(root, text=resp).pack(padx=20, pady=5)
+            but = ResponseButton(root, text=resp)
+            but.pack(padx=20, pady=5)
 
         root.mainloop()
     except tk.TclError:

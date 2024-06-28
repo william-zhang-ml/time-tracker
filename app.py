@@ -99,5 +99,6 @@ if __name__ == '__main__':
             but.pack(padx=20, pady=5)
 
         root.mainloop()
-    except tk.TclError:
+    except tk.TclError as exc:
+        print(f'Oops - {exc}')
         sys.exit()

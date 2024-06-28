@@ -1,4 +1,5 @@
 """App that tracks and analyzes your time. """
+from datetime import datetime
 from functools import partial
 import sys
 import tkinter as tk
@@ -49,6 +50,8 @@ class ResponseButton(ttk.Button):
         super().__init__(*args, **kwargs)
         self.bind("<Enter>", lambda _: self.show_tooltip())
         self.bind("<Leave>", lambda _: self.hide_tooltip())
+        self.time = datetime.now().time().strftime('%H:%M:%S')
+        self.resp = get_user_input()
         self.tooltip = None
         if self['command']:
             warnings.warn('ResponseButton will override command.')
@@ -56,7 +59,7 @@ class ResponseButton(ttk.Button):
 
     def update_response(self) -> None:
         """Prompt user for a new response and update. """
-        self['text'] = get_user_input()
+        self.resp = get_user_input()
 
     def show_tooltip(self) -> None:
         """Create a new tooltip window. """
@@ -69,7 +72,7 @@ class ResponseButton(ttk.Button):
         )
         label = ttk.Label(
             self.tooltip,
-            text=self.cget('text'),
+            text=f'{self.time} -> {self.resp}',
             justify=tk.LEFT,
             background="#ffffe0",
             relief=tk.SOLID,
@@ -91,13 +94,11 @@ if __name__ == '__main__':
 
     try:
         for _ in range(5):
-            # Get user input
-            resp = get_user_input()
-
-            # Pack into progress tracker
-            but = ResponseButton(root, text=resp)
+            # Pack user input into progress tracker
+            but = ResponseButton(root)
             but.pack(padx=20, pady=5)
 
         root.mainloop()
-    except tk.TclError:
+    except tk.TclError as exc:
+        print(f'Oops - {exc}')
         sys.exit()

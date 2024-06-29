@@ -41,25 +41,31 @@ def open_choice_menu(choices: Iterable[str]) -> str:
 
 
 CHOICES = ['Option 1', 'Option 2', 'Option 3']
+CHOICE_COLOR = {
+    'Option 1': '#baffc9',
+    'Option 2': '#bae1ff',
+    'Option 3': '#ffb3ba'
+}
 get_user_input = partial(open_choice_menu, CHOICES)
 
 
-class ResponseButton(ttk.Button):
+class ResponseButton(tk.Button):
     """Button that keeps track of user response, lets user change response. """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.bind("<Enter>", lambda _: self.show_tooltip())
         self.bind("<Leave>", lambda _: self.hide_tooltip())
         self.time = datetime.now().time().strftime('%H:%M:%S')
-        self.resp = get_user_input()
         self.tooltip = None
         if self['command']:
             warnings.warn('ResponseButton will override command.')
         self['command'] = self.update_response
+        self.update_response()
 
     def update_response(self) -> None:
         """Prompt user for a new response and update. """
         self.resp = get_user_input()
+        self['bg'] = CHOICE_COLOR[self.resp]
 
     def show_tooltip(self) -> None:
         """Create a new tooltip window. """
@@ -95,8 +101,8 @@ if __name__ == '__main__':
     try:
         for _ in range(5):
             # Pack user input into progress tracker
-            but = ResponseButton(root)
-            but.pack(padx=20, pady=5)
+            but = ResponseButton(root, width=5, height=2)
+            but.pack(padx=20, pady=0)
 
         root.mainloop()
     except tk.TclError as exc:

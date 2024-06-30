@@ -7,6 +7,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Iterable
 import warnings
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 __author__ = 'William Zhang'
@@ -112,8 +114,19 @@ if __name__ == '__main__':
             but.pack(padx=20, pady=0)
             root_buttons.append(but)
 
+        # Show initial response summary in a bar graph
         counter = Counter([but.data for but in root_buttons])
-        print('Initial response summary:', counter)
+        bar_height = []
+        for curr in CHOICES:
+            bar_height.append(counter[curr])
+        fig, axes = plt.subplots(figsize=(4, 4))
+        axes.bar(CHOICES, bar_height, color=CHOICE_COLOR.values())
+        axes.set_facecolor('#333333')
+        axes.set_title('Initial response summary')
+        canvas = FigureCanvasTkAgg(fig, root)
+        canvas.draw()
+        canvas.get_tk_widget().pack(padx=2, pady=2)
+
         root.mainloop()
     except tk.TclError as exc:
         print(f'Oops - {exc}')

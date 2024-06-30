@@ -1,4 +1,5 @@
 """App that tracks and analyzes your time. """
+from collections import Counter
 from datetime import datetime
 from functools import partial
 import sys
@@ -92,18 +93,27 @@ class ResponseButton(tk.Button):
             self.tooltip.destroy()
             self.tooltip = None
 
+    @property
+    def data(self) -> str:
+        """str: stored user response """
+        return self.resp
+
 
 if __name__ == '__main__':
     # Create progress tracker window
     root = tk.Tk()
     root.title('Progress')
+    root_buttons = []
 
     try:
         for _ in range(5):
             # Pack user input into progress tracker
             but = ResponseButton(root, width=5, height=2)
             but.pack(padx=20, pady=0)
+            root_buttons.append(but)
 
+        counter = Counter([but.data for but in root_buttons])
+        print('Initial response summary:', counter)
         root.mainloop()
     except tk.TclError as exc:
         print(f'Oops - {exc}')

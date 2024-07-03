@@ -54,15 +54,22 @@ get_user_input = partial(open_choice_menu, CHOICES)
 
 class ResponseButton(tk.Button):
     """Button that keeps track of user response, lets user change response. """
+    _next_id = 0
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        # set button callback and bind tooltip methods
+        self.tooltip = None
         self.bind("<Enter>", lambda _: self.show_tooltip())
         self.bind("<Leave>", lambda _: self.hide_tooltip())
-        self.time = datetime.now().time().strftime('%H:%M:%S')
-        self.tooltip = None
         if self['command']:
             warnings.warn('ResponseButton will override command.')
         self['command'] = self.update_response
+
+        # populate response data fields
+        self.but_id, self._next_id = self._next_id, self._next_id + 1
+        self.time = datetime.now().time().strftime('%H:%M:%S')
         self.update_response()
 
     def update_response(self) -> None:

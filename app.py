@@ -1,11 +1,10 @@
 """App that tracks and analyzes your time. """
-from collections import Counter
 from datetime import datetime
 from functools import partial
 import sys
 import tkinter as tk
 from tkinter import ttk
-from typing import Iterable
+from typing import Any, Iterable
 import warnings
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -54,21 +53,32 @@ get_user_input = partial(open_choice_menu, CHOICES)
 
 class ResponseButton(tk.Button):
     """Button that keeps track of user response, lets user change response. """
+    _next_id = 0
+    _subscribers = []
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        # set button callback and bind tooltip methods
+        self.tooltip = None
         self.bind("<Enter>", lambda _: self.show_tooltip())
         self.bind("<Leave>", lambda _: self.hide_tooltip())
-        self.time = datetime.now().time().strftime('%H:%M:%S')
-        self.tooltip = None
         if self['command']:
             warnings.warn('ResponseButton will override command.')
         self['command'] = self.update_response
+
+        # populate response data fields
+        self.but_id, self._next_id = self._next_id, self._next_id + 1
+        self.time = datetime.now().time().strftime('%H:%M:%S')
+        self.resp = None
         self.update_response()
 
     def update_response(self) -> None:
         """Prompt user for a new response and update. """
+        old_resp = self.resp
         self.resp = get_user_input()
         self['bg'] = CHOICE_COLOR[self.resp]
+        self.notify_subscribers(old_resp, self.resp)
 
     def show_tooltip(self) -> None:
         """Create a new tooltip window. """
@@ -95,10 +105,70 @@ class ResponseButton(tk.Button):
             self.tooltip.destroy()
             self.tooltip = None
 
+    @classmethod
+    def register_subscriber(cls, new_sub: Any) -> None:
+        """Register subscriber to notify when creating/updating buttons.
+
+        Args:
+            new_sub (Any): subscriber to update
+        """
+        cls._subscribers.append(new_sub)
+
+    @classmethod
+    def notify_subscribers(
+        cls,
+        old_resp: str,
+        new_resp: str
+    ) -> None:
+        """Notify all subscribers of a button create/update event.
+
+        Args:
+            old_resp (str): old button user response
+            new_resp (str): new button user response
+        """
+        for sub in cls._subscribers:
+            sub.update(old_resp, new_resp)
+
     @property
     def data(self) -> str:
         """str: stored user response """
         return self.resp
+
+
+class ResponseGraph:
+    """Dynamic graph that tallies user response running total. """
+    def __init__(self, dashboard: tk.Tk) -> None:
+        self.fig, self.axes = plt.subplots(figsize=(4, 4))
+        self.axes.set_facecolor('#333333')
+        self.axes.set_title('Response Tally')
+        self.canvas = FigureCanvasTkAgg(self.fig, dashboard)
+        self.canvas.get_tk_widget().pack(padx=2, pady=2)
+        self.bars = {curr: 0 for curr in CHOICES}
+        self.draw()
+
+    def update(
+        self,
+        old_resp: str,
+        new_resp: str
+    ) -> None:
+        """Update response counts and redraw bar graph.
+
+        Args:
+            old_resp (str): old button user response
+            new_resp (str): new button user response
+        """
+        if old_resp:
+            self.bars[old_resp] -= 1  # not needed for new buttons
+        self.bars[new_resp] += 1
+        self.draw()
+
+    def draw(self) -> None:
+        """Clear and redraw bar graph. """
+        self.axes.clear()
+        bar_height = [self.bars[curr] for curr in CHOICES]
+        bar_color = [CHOICE_COLOR[curr] for curr in CHOICES]
+        self.axes.bar(CHOICES, bar_height, color=bar_color)
+        self.canvas.draw()
 
 
 if __name__ == '__main__':
@@ -107,25 +177,16 @@ if __name__ == '__main__':
     root.title('Progress')
     root_buttons = []
 
+    # Initialize response tally
+    graph = ResponseGraph(root)
+    ResponseButton.register_subscriber(graph)
+
     try:
         for _ in range(5):
             # Pack user input into progress tracker
             but = ResponseButton(root, width=5, height=2)
             but.pack(padx=20, pady=0)
             root_buttons.append(but)
-
-        # Show initial response summary in a bar graph
-        counter = Counter([but.data for but in root_buttons])
-        bar_height = []
-        for curr in CHOICES:
-            bar_height.append(counter[curr])
-        fig, axes = plt.subplots(figsize=(4, 4))
-        axes.bar(CHOICES, bar_height, color=CHOICE_COLOR.values())
-        axes.set_facecolor('#333333')
-        axes.set_title('Initial response summary')
-        canvas = FigureCanvasTkAgg(fig, root)
-        canvas.draw()
-        canvas.get_tk_widget().pack(padx=2, pady=2)
 
         root.mainloop()
     except tk.TclError as exc:
